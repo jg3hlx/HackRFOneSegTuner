@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
-"""Live one-seg receiver with HackRF One → ffplay real-time display."""
-import sys, os, argparse, signal, subprocess, time
+"""Live one-seg receiver with HackRF One → ffplay real-time display.
+
+Usage:
+  python3 live_oneseg.py 23              # ch23 (auto PPM calibration)
+  python3 live_oneseg.py 26 --ppm 20.5   # manual PPM override
+  python3 live_oneseg.py 23 --calibrate  # find best PPM from short capture
+"""
+import sys, os, argparse, signal, subprocess, time, tempfile
 from gnuradio import gr, blocks, filter as gr_filter, analog
 from gnuradio.fft import window
 from gnuradio import isdbt
@@ -15,6 +21,10 @@ parser = argparse.ArgumentParser(description='Live one-seg receiver')
 parser.add_argument('channel', type=int, help='UHF channel (13-62)')
 parser.add_argument('--ppm', type=float, default=20,
                     help='Crystal error in PPM (default: 20 for HackRF)')
+parser.add_argument('--sc', type=int, default=None,
+                    help='Override subcarrier offset directly (skip PPM calc)')
+parser.add_argument('--calibrate', action='store_true',
+                    help='Auto-calibrate: capture 5s, try offsets, pick best')
 parser.add_argument('--amp', action='store_true', default=True,
                     help='Enable RF amp (default: on)')
 parser.add_argument('--no-amp', action='store_true')
@@ -28,13 +38,66 @@ if args.no_amp:
 
 freq = 473.143e6 + (args.channel - 13) * 6e6
 
-offset_hz = args.ppm * 1e-6 * freq
-n_subcarriers = round(offset_hz / SUBCARRIER_HZ)
+def calibrate_offset(freq, amp, if_gain, bb_gain):
+    """Capture 5s and try offsets 8-13 to find which produces most TS data."""
+    print("=== Auto Calibration ===")
+    tmpiq = tempfile.mktemp(suffix='.cf32')
+
+    print(f"Capturing 5s from {freq/1e6:.3f} MHz...")
+    cal_tb = gr.top_block()
+    cal_src = osmosdr.source(args="numchan=1 hackrf=0")
+    cal_src.set_sample_rate(SAMP_RATE)
+    cal_src.set_center_freq(freq)
+    if amp:
+        cal_src.set_gain(14, 'RF', 0)
+    cal_src.set_gain(if_gain, 'IF', 0)
+    cal_src.set_gain(bb_gain, 'BB', 0)
+    cal_head = blocks.head(gr.sizeof_gr_complex, int(SAMP_RATE * 5))
+    cal_sink = blocks.file_sink(gr.sizeof_gr_complex, tmpiq, False)
+    cal_tb.connect(cal_src, cal_head, cal_sink)
+    cal_tb.start()
+    cal_tb.wait()
+
+    best_sc, best_sz = 0, 0
+    nominal = round(20 * 1e-6 * freq / SUBCARRIER_HZ)
+
+    for n_sc in range(nominal - 2, nominal + 3):
+        corr = -(n_sc * SUBCARRIER_HZ)
+        outts = tempfile.mktemp(suffix='.ts')
+        cmd = ['python3', os.path.join(os.path.dirname(__file__), 'offline_test2.py'),
+               tmpiq, '--guard', '1/8', '--full-chain',
+               '--freq-offset', str(corr), '-o', outts]
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        sz = os.path.getsize(outts) if os.path.exists(outts) else 0
+        print(f"  offset {n_sc:+3d}sc ({corr:+.0f} Hz): {sz/1024:.1f} KB")
+        if sz > best_sz:
+            best_sz = sz
+            best_sc = n_sc
+        if os.path.exists(outts):
+            os.remove(outts)
+
+    os.remove(tmpiq)
+
+    if best_sz == 0:
+        print("WARNING: No offset produced TS output. Channel may not have one-seg.")
+        print(f"Using nominal offset {nominal}")
+        return nominal
+
+    print(f"Best: {best_sc:+d} subcarriers ({best_sz/1024:.1f} KB)")
+    return best_sc
+
+if args.calibrate:
+    n_subcarriers = calibrate_offset(freq, args.amp, args.if_gain, args.bb_gain)
+elif args.sc is not None:
+    n_subcarriers = args.sc
+else:
+    offset_hz = args.ppm * 1e-6 * freq
+    n_subcarriers = round(offset_hz / SUBCARRIER_HZ)
+
 correction_hz = -(n_subcarriers * SUBCARRIER_HZ)
 
 print(f"=== Live One-Seg Receiver ===")
 print(f"Channel:    {args.channel} ({freq/1e6:.3f} MHz)")
-print(f"PPM:        {args.ppm}")
 print(f"Correction: {correction_hz:.0f} Hz ({n_subcarriers:+d} subcarriers)")
 print(f"Gain:       AMP={'ON' if args.amp else 'OFF'} IF={args.if_gain} BB={args.bb_gain}")
 print()
