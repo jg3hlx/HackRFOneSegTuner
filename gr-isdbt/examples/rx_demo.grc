@@ -1,0 +1,1065 @@
+options:
+  parameters:
+    author: ''
+    catch_exceptions: 'True'
+    category: Custom
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: ''
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: qt_gui
+    hier_block_src_path: '.:'
+    id: rx_demo
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: ''
+    window_size: 1280, 1024
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [10, 10]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: active_carriers
+  id: variable
+  parameters:
+    comment: ''
+    value: 13*108*2**(mode-1)+1
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [184, 11]
+    rotation: 0
+    state: enabled
+- name: center_freq
+  id: variable_qtgui_entry
+  parameters:
+    comment: ''
+    entry_signal: editingFinished
+    gui_hint: ''
+    label: Center freq.
+    type: int
+    value: '533143000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [440, 20.0]
+    rotation: 0
+    state: enabled
+- name: data_carriers
+  id: variable
+  parameters:
+    comment: ''
+    value: 13*96*2**(mode-1)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [304, 11]
+    rotation: 0
+    state: enabled
+- name: freq_offset
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: Offset
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: int
+    start: '-3000'
+    step: '1'
+    stop: '3000'
+    value: '0'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [592, 28.0]
+    rotation: 0
+    state: enabled
+- name: gain
+  id: variable_qtgui_entry
+  parameters:
+    comment: ''
+    entry_signal: editingFinished
+    gui_hint: ''
+    label: ''
+    type: int
+    value: '8'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [720, 36.0]
+    rotation: 0
+    state: enabled
+- name: guard
+  id: variable
+  parameters:
+    comment: ''
+    value: 1.0/16
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [16, 91]
+    rotation: 0
+    state: enabled
+- name: mode
+  id: variable
+  parameters:
+    comment: ''
+    value: '3'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [112, 91]
+    rotation: 0
+    state: enabled
+- name: rate_corr
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: Rate correction
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: int
+    start: '-100'
+    step: '1'
+    stop: '100'
+    value: '0'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [456, 100.0]
+    rotation: 0
+    state: enabled
+- name: rfgain
+  id: variable_qtgui_entry
+  parameters:
+    comment: ''
+    entry_signal: editingFinished
+    gui_hint: ''
+    label: ''
+    type: int
+    value: '4'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [880, 20.0]
+    rotation: 0
+    state: enabled
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: 8e6*(64/63)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [184, 83]
+    rotation: 0
+    state: enabled
+- name: source_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: 7e6
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [40, 164.0]
+    rotation: 0
+    state: enabled
+- name: total_carriers
+  id: variable
+  parameters:
+    comment: ''
+    value: 2**(10+mode)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [304, 91]
+    rotation: 0
+    state: enabled
+- name: blocks_file_sink_0
+  id: blocks_file_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    append: 'True'
+    comment: ''
+    file: /tmp/result_layer_b.ts
+    type: byte
+    unbuffered: 'False'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1352, 636.0]
+    rotation: 0
+    state: disabled
+- name: blocks_file_sink_0_0
+  id: blocks_file_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    append: 'True'
+    comment: ''
+    file: /tmp/output.ts
+    type: byte
+    unbuffered: 'False'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1344, 772.0]
+    rotation: 0
+    state: enabled
+- name: blocks_file_source_0
+  id: blocks_file_source
+  parameters:
+    affinity: ''
+    alias: ''
+    begin_tag: pmt.PMT_NIL
+    comment: ''
+    file: /tmp/supply_crate
+    length: '0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    offset: '0'
+    repeat: 'False'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [24, 228.0]
+    rotation: 0
+    state: disabled
+- name: blocks_nlog10_ff_0
+  id: blocks_nlog10_ff
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    k: '0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    n: '1'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [832, 804.0]
+    rotation: 0
+    state: enabled
+- name: blocks_nlog10_ff_0_0
+  id: blocks_nlog10_ff
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    k: '0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    n: '1'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [344, 596.0]
+    rotation: 0
+    state: enabled
+- name: blocks_null_sink_0
+  id: blocks_null_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    bus_structure_sink: '[[0,],]'
+    comment: ''
+    num_inputs: '1'
+    type: byte
+    vlen: data_carriers
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [432, 400.0]
+    rotation: 180
+    state: enabled
+- name: blocks_null_sink_1
+  id: blocks_null_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    bus_structure_sink: '[[0,],]'
+    comment: ''
+    num_inputs: '1'
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1120, 568.0]
+    rotation: 0
+    state: disabled
+- name: blocks_throttle2_0
+  id: blocks_throttle2
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    ignoretag: 'True'
+    limit: auto
+    maximum: '0.1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samples_per_second: samp_rate
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [320, 204.0]
+    rotation: 0
+    state: disabled
+- name: blocks_vector_to_stream_0
+  id: blocks_vector_to_stream
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_items: '188'
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [872, 664.0]
+    rotation: 0
+    state: enabled
+- name: blocks_vector_to_stream_1
+  id: blocks_vector_to_stream
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_items: active_carriers
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1192, 352.0]
+    rotation: 0
+    state: enabled
+- name: isdbt_bit_deinterleaver_0
+  id: isdbt_bit_deinterleaver
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    constellation_size: '64'
+    layer: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    mode: mode
+    segments: '12'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [376, 460.0]
+    rotation: 180
+    state: enabled
+- name: isdbt_byte_deinterleaver_0
+  id: isdbt_byte_deinterleaver
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [96, 664.0]
+    rotation: 0
+    state: enabled
+- name: isdbt_energy_descrambler_0
+  id: isdbt_energy_descrambler
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [345, 684]
+    rotation: 0
+    state: enabled
+- name: isdbt_frequency_deinterleaver_0
+  id: isdbt_frequency_deinterleaver
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    mode: mode
+    oneseg: 'True'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1312, 436.0]
+    rotation: 180
+    state: enabled
+- name: isdbt_ofdm_synchronization_0
+  id: isdbt_ofdm_synchronization
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    cp_length: '0.125'
+    interpolate: 'False'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    mode: mode
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [848, 280.0]
+    rotation: 0
+    state: enabled
+- name: isdbt_reed_solomon_dec_isdbt_0
+  id: isdbt_reed_solomon_dec_isdbt
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [648, 664.0]
+    rotation: 0
+    state: enabled
+- name: isdbt_symbol_demapper_0
+  id: isdbt_symbol_demapper
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    constellation_size_A: '4'
+    constellation_size_B: '64'
+    constellation_size_C: '16'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    mode: mode
+    segments_A: '1'
+    segments_B: '12'
+    segments_C: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [752, 448.0]
+    rotation: 180
+    state: enabled
+- name: isdbt_time_deinterleaver_0
+  id: isdbt_time_deinterleaver
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    length_A: '4'
+    length_B: '2'
+    length_C: '0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    mode: mode
+    segments_A: '1'
+    segments_B: '12'
+    segments_C: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [992, 416.0]
+    rotation: 180
+    state: enabled
+- name: isdbt_tmcc_decoder_0
+  id: isdbt_tmcc_decoder
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    mode: mode
+    print_params: 'False'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1176, 184.0]
+    rotation: 0
+    state: enabled
+- name: isdbt_viterbi_decoder_0
+  id: isdbt_viterbi_decoder
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    constellation_size: '64'
+    layer: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    rate: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [80, 460.0]
+    rotation: 180
+    state: enabled
+- name: low_pass_filter_0
+  id: low_pass_filter
+  parameters:
+    affinity: ''
+    alias: ''
+    beta: '6.76'
+    comment: ''
+    cutoff_freq: 5.8e6/2.0
+    decim: '1'
+    gain: '1'
+    interp: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_rate: samp_rate
+    type: fir_filter_ccf
+    width: 0.5e6
+    win: window.WIN_BLACKMAN
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [600, 192.0]
+    rotation: 0
+    state: enabled
+- name: ofdm_reset
+  id: variable_qtgui_msg_push_button
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: Reset
+    msgName: pressed
+    relBackgroundColor: default
+    relFontColor: default
+    type: int
+    value: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [568, 324.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_const_sink_x_1
+  id: qtgui_const_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    autoscale: 'False'
+    axislabels: 'True'
+    color1: '"blue"'
+    color10: '"dark blue"'
+    color2: '"red"'
+    color3: '"green"'
+    color4: '"black"'
+    color5: '"cyan"'
+    color6: '"magenta"'
+    color7: '"yellow"'
+    color8: '"dark red"'
+    color9: '"dark green"'
+    comment: ''
+    grid: 'False'
+    gui_hint: show_stats@1
+    label1: ''
+    label10: ''
+    label2: ''
+    label3: ''
+    label4: ''
+    label5: ''
+    label6: ''
+    label7: ''
+    label8: ''
+    label9: ''
+    legend: 'True'
+    marker1: '0'
+    marker10: '0'
+    marker2: '0'
+    marker3: '0'
+    marker4: '0'
+    marker5: '0'
+    marker6: '0'
+    marker7: '0'
+    marker8: '0'
+    marker9: '0'
+    name: '""'
+    nconnections: '1'
+    size: active_carriers
+    style1: '0'
+    style10: '0'
+    style2: '0'
+    style3: '0'
+    style4: '0'
+    style5: '0'
+    style6: '0'
+    style7: '0'
+    style8: '0'
+    style9: '0'
+    tr_chan: '0'
+    tr_level: '0.0'
+    tr_mode: qtgui.TRIG_MODE_FREE
+    tr_slope: qtgui.TRIG_SLOPE_POS
+    tr_tag: '""'
+    type: complex
+    update_time: '0.1'
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
+    xmax: '2'
+    xmin: '-2'
+    ymax: '2'
+    ymin: '-2'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1440, 324.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_freq_sink_x_0
+  id: qtgui_freq_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    autoscale: 'False'
+    average: '1.0'
+    axislabels: 'True'
+    bw: samp_rate
+    color1: '"blue"'
+    color10: '"dark blue"'
+    color2: '"red"'
+    color3: '"green"'
+    color4: '"black"'
+    color5: '"cyan"'
+    color6: '"magenta"'
+    color7: '"yellow"'
+    color8: '"dark red"'
+    color9: '"dark green"'
+    comment: ''
+    ctrlpanel: 'False'
+    fc: '0'
+    fftsize: '4096'
+    freqhalf: 'True'
+    grid: 'False'
+    gui_hint: show_stats@2
+    label: Relative Gain
+    label1: ''
+    label10: ''''''
+    label2: ''''''
+    label3: ''''''
+    label4: ''''''
+    label5: ''''''
+    label6: ''''''
+    label7: ''''''
+    label8: ''''''
+    label9: ''''''
+    legend: 'True'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    name: '""'
+    nconnections: '1'
+    norm_window: 'False'
+    showports: 'False'
+    tr_chan: '0'
+    tr_level: '0.0'
+    tr_mode: qtgui.TRIG_MODE_FREE
+    tr_tag: '""'
+    type: complex
+    units: dB
+    update_time: '0.10'
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
+    wintype: window.WIN_BLACKMAN_hARRIS
+    ymax: '10'
+    ymin: '-120'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [880, 164.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_number_sink_0_0_0
+  id: qtgui_number_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    autoscale: 'False'
+    avg: '0'
+    color1: ("black", "black")
+    color10: ("black", "black")
+    color2: ("black", "black")
+    color3: ("black", "black")
+    color4: ("black", "black")
+    color5: ("black", "black")
+    color6: ("black", "black")
+    color7: ("black", "black")
+    color8: ("black", "black")
+    color9: ("black", "black")
+    comment: ''
+    factor1: '1'
+    factor10: '1'
+    factor2: '1'
+    factor3: '1'
+    factor4: '1'
+    factor5: '1'
+    factor6: '1'
+    factor7: '1'
+    factor8: '1'
+    factor9: '1'
+    graph_type: qtgui.NUM_GRAPH_HORIZ
+    gui_hint: ''
+    label1: ''
+    label10: ''
+    label2: ''
+    label3: ''
+    label4: ''
+    label5: ''
+    label6: ''
+    label7: ''
+    label8: ''
+    label9: ''
+    max: '0'
+    min: '-10'
+    name: '"BER post-Viterbi (log10)"'
+    nconnections: '1'
+    type: float
+    unit1: ''
+    unit10: ''
+    unit2: ''
+    unit3: ''
+    unit4: ''
+    unit5: ''
+    unit6: ''
+    unit7: ''
+    unit8: ''
+    unit9: ''
+    update_time: '0.10'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [976, 772.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_number_sink_0_1
+  id: qtgui_number_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    autoscale: 'False'
+    avg: '0'
+    color1: ("black", "black")
+    color10: ("black", "black")
+    color2: ("black", "black")
+    color3: ("black", "black")
+    color4: ("black", "black")
+    color5: ("black", "black")
+    color6: ("black", "black")
+    color7: ("black", "black")
+    color8: ("black", "black")
+    color9: ("black", "black")
+    comment: ''
+    factor1: '1'
+    factor10: '1'
+    factor2: '1'
+    factor3: '1'
+    factor4: '1'
+    factor5: '1'
+    factor6: '1'
+    factor7: '1'
+    factor8: '1'
+    factor9: '1'
+    graph_type: qtgui.NUM_GRAPH_HORIZ
+    gui_hint: ''
+    label1: ''
+    label10: ''
+    label2: ''
+    label3: ''
+    label4: ''
+    label5: ''
+    label6: ''
+    label7: ''
+    label8: ''
+    label9: ''
+    max: '0'
+    min: '-5'
+    name: '"BER pre-Viterbi (log10)"'
+    nconnections: '1'
+    type: float
+    unit1: ''
+    unit10: ''
+    unit2: ''
+    unit3: ''
+    unit4: ''
+    unit5: ''
+    unit6: ''
+    unit7: ''
+    unit8: ''
+    unit9: ''
+    update_time: '0.10'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [520, 548.0]
+    rotation: 0
+    state: enabled
+- name: show_stats
+  id: qtgui_tab_widget
+  parameters:
+    alias: ''
+    comment: ''
+    gui_hint: ''
+    label0: Nothing
+    label1: Constellation
+    label10: Tab 10
+    label11: Tab 11
+    label12: Tab 12
+    label13: Tab 13
+    label14: Tab 14
+    label15: Tab 15
+    label16: Tab 16
+    label17: Tab 17
+    label18: Tab 18
+    label19: Tab 19
+    label2: Spectrum
+    label3: Tab 3
+    label4: Tab 4
+    label5: Tab 5
+    label6: Tab 6
+    label7: Tab 7
+    label8: Tab 8
+    label9: Tab 9
+    num_tabs: '3'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1448, 140.0]
+    rotation: 0
+    state: enabled
+- name: single_pole_iir_filter_xx_0_0
+  id: single_pole_iir_filter_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha: 1e-3
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [128, 604.0]
+    rotation: 0
+    state: enabled
+- name: snippet_0
+  id: snippet
+  parameters:
+    alias: ''
+    code: "import os\nimport subprocess\n\nif os.path.exists(\"/tmp/result_layer_b.ts\"\
+      ):\n  os.remove(\"/tmp/result_layer_b.ts\")\n\nos.mkfifo(\"/tmp/result_layer_b.ts\"\
+      )\nglobal playerProc\n#playerProc=subprocess.Popen(['mpv','--no-terminal','--deinterlace=yes','/tmp/result_layer_b.ts'])\n\
+      playerProc=subprocess.Popen(['ffplay','-loglevel','quiet','-infbuf','-i','/tmp/result_layer_b.ts'])"
+    comment: create the fifo
+    priority: '0'
+    section: init_before_blocks
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1120, 100.0]
+    rotation: 0
+    state: disabled
+- name: snippet_1
+  id: snippet
+  parameters:
+    alias: ''
+    code: playerProc.terminate()
+    comment: ''
+    priority: '0'
+    section: main_after_stop
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1120, 36.0]
+    rotation: 0
+    state: disabled
+- name: soapy_sdrplay_source_0
+  id: soapy_sdrplay_source
+  parameters:
+    affinity: ''
+    agc: 'False'
+    agc_setpoint: '-30'
+    alias: ''
+    antenna: Antenna B
+    bandwidth: '7000000'
+    bias: ''
+    center_freq: center_freq+freq_offset
+    comment: ''
+    dev_args: ''
+    freq_correction: '0'
+    gain: gain
+    lna_state: rfgain
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_rate: samp_rate+rate_corr
+    type: fc32
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [240, 308.0]
+    rotation: 0
+    state: enabled
+
+connections:
+- [blocks_file_source_0, '0', blocks_throttle2_0, '0']
+- [blocks_nlog10_ff_0, '0', qtgui_number_sink_0_0_0, '0']
+- [blocks_nlog10_ff_0_0, '0', qtgui_number_sink_0_1, '0']
+- [blocks_throttle2_0, '0', low_pass_filter_0, '0']
+- [blocks_vector_to_stream_0, '0', blocks_file_sink_0, '0']
+- [blocks_vector_to_stream_0, '0', blocks_file_sink_0_0, '0']
+- [blocks_vector_to_stream_0, '0', blocks_null_sink_1, '0']
+- [blocks_vector_to_stream_1, '0', qtgui_const_sink_x_1, '0']
+- [isdbt_bit_deinterleaver_0, '0', isdbt_viterbi_decoder_0, '0']
+- [isdbt_bit_deinterleaver_0, changed, isdbt_byte_deinterleaver_0, reset]
+- [isdbt_bit_deinterleaver_0, changed, isdbt_energy_descrambler_0, reset]
+- [isdbt_byte_deinterleaver_0, '0', isdbt_energy_descrambler_0, '0']
+- [isdbt_energy_descrambler_0, '0', isdbt_reed_solomon_dec_isdbt_0, '0']
+- [isdbt_frequency_deinterleaver_0, '0', isdbt_time_deinterleaver_0, '0']
+- [isdbt_ofdm_synchronization_0, '0', blocks_vector_to_stream_1, '0']
+- [isdbt_ofdm_synchronization_0, '0', isdbt_tmcc_decoder_0, '0']
+- [isdbt_reed_solomon_dec_isdbt_0, '0', blocks_vector_to_stream_0, '0']
+- [isdbt_reed_solomon_dec_isdbt_0, '1', blocks_nlog10_ff_0, '0']
+- [isdbt_symbol_demapper_0, '0', blocks_null_sink_0, '0']
+- [isdbt_symbol_demapper_0, '1', isdbt_bit_deinterleaver_0, '0']
+- [isdbt_time_deinterleaver_0, '0', isdbt_symbol_demapper_0, '0']
+- [isdbt_tmcc_decoder_0, '0', isdbt_frequency_deinterleaver_0, '0']
+- [isdbt_tmcc_decoder_0, ofdm reset, isdbt_ofdm_synchronization_0, reset]
+- [isdbt_tmcc_decoder_0, params, isdbt_bit_deinterleaver_0, params]
+- [isdbt_tmcc_decoder_0, params, isdbt_symbol_demapper_0, params]
+- [isdbt_tmcc_decoder_0, params, isdbt_time_deinterleaver_0, params]
+- [isdbt_tmcc_decoder_0, params, isdbt_viterbi_decoder_0, params]
+- [isdbt_viterbi_decoder_0, '0', isdbt_byte_deinterleaver_0, '0']
+- [isdbt_viterbi_decoder_0, '1', single_pole_iir_filter_xx_0_0, '0']
+- [low_pass_filter_0, '0', isdbt_ofdm_synchronization_0, '0']
+- [low_pass_filter_0, '0', qtgui_freq_sink_x_0, '0']
+- [ofdm_reset, pressed, isdbt_ofdm_synchronization_0, reset]
+- [single_pole_iir_filter_xx_0_0, '0', blocks_nlog10_ff_0_0, '0']
+- [soapy_sdrplay_source_0, '0', low_pass_filter_0, '0']
+
+metadata:
+  file_format: 1
+  grc_version: 3.10.12.0

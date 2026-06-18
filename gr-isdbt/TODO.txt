@@ -1,0 +1,25 @@
+This is a non-exhaustive list of things that should be done in the near-far future. These are in addition to specific changes in the code (such as performance improvements or alternative implementations), some of which are mentioned as comments in the code. 
+
+* Independent digital blocks
+    Some of these use static variables, preventing the placement of more than one block (e.g. two bit deinterleavers) without race conditions.
+
+* Mode 1 (2K) fixes
+    Unfortunately there's only a single broadcaster in my area that delivers mode 1 frames. This may actually be a good thing as 97% of the broadcasters here employ mode 3, which is well-tested. Currently the frequency offset is thrown off silently. Constellation is seemingly correct but TMCC horribly fails (why?).
+
+* Time deinterleaver and length 1 is no good.
+    This results in the Reed-Solomon decoder nope-ing out. There's one signal which uses this strange combination.
+
+* Better channel estimation (Done to some degree)
+    The current implementation is extremely simple and not robust at all. Channel taps at the scattered pilots are calculated as a division and are assumed as true (i.e. no noise considerations). Plus, in the rest of the carriers, the estimation is simply a linear interpolation. A more robust (i.e. ML or MMSE, using time-frequency information) should be implemented since a huge performance improvements is expected with this relatively simple extension. 
+    tildearrow: I have worked on a new method which is possible thanks to synchronization improvements (in particular, a greatly improved phase lock). This method uses measurements from four symbols and applies estimated phase change, greatly increasing precision and (at least) solving one major problem (higher constellation dots being out of focus). Linear interpolation is still being used, but it seems to be working fine. It still does not consider noise though!
+
+* Better synchronization (Done. See the OFDM Synchronization block, now including feedback for both fine frequency and timing correction. Legacy block still present for comparison purposes.) (Done again.)
+    Again, the current implementation is based on a classic method from 1997. It does not include any form of feedback, nor a timing synchronization block. This is a more complex addition (it requires integrating several blocks into one), but the improvements should be important too. 
+    A new strategy relying on sampling rate error has been developed. It only calls ml\_sync once and then tracks the rate error (driven by phase change detection via pilot gains).
+
+* Integer frequency correction
+    Most OFDM systems use CPs for integer frequency correction. ISDB-T does not have such pilots, and we developed an heuristic method that uses the TMCC carriers, but that has little theoretical backup. Some formal analysis of the problem is needed, and the corresponding implementation included. Maybe simply using the channel taps is enough?
+    In a more specific note, the implementation should be separated into acquisition and tracking phases, so as to accelerate the whole process without compromising robustness.  
+
+* Differential modulation is not implemented. 
+    This is not a very serious matter, since differential modulation is rarely used (if at all). Moreover, it requires several changes in the implementation (interleaving, pilot positions, etc. are all changed). Eventually, it should be implemented, but it is clearly low priority. 

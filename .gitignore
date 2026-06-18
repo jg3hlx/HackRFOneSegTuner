@@ -1,0 +1,12 @@
+*.cf32
+*.ts
+*.bin
+*.mp4
+*.png
+__pycache__/
+*.pyc
+sessions/
+
+# gr-isdbt build artifacts
+gr-isdbt/build/
+gr-isdbt/.conda/
