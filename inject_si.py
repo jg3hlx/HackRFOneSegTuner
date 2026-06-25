@@ -99,7 +99,7 @@ def build_nit(nid, channel, service_id, remote_key):
 def build_sdt(nid, service_id):
     """SDT actual: 42 F0 ..."""
     svc_name = arib_text('TOMOYA TV')
-    svc_desc = bytes([0x48, 2 + len(svc_name), 0x01, 0x00, len(svc_name)]) + svc_name
+    svc_desc = bytes([0x48, 3 + len(svc_name), 0x01, 0x00, len(svc_name)]) + svc_name
 
     body = struct.pack('>H', nid)
     body += b'\xC1\x00\x00'
