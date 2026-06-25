@@ -15,5 +15,5 @@ for NUM in 1 2 3; do
         echo "=== Skipping #${NUM}: ${SRC} not found ==="
         continue
     fi
-    ./encode_content.sh "$SRC" "$NUM" "$CH"
+    ./encode_content.sh --h264 "$SRC" "$NUM" "$CH"
 done
