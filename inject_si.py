@@ -68,7 +68,7 @@ def build_nit(nid, channel, service_id, remote_key):
     freq_val = 3312 + 42 * (channel - 13)
 
     # Network descriptors: network_name(0x40) + system_management(0xFE)
-    net_name = 'iwancof局'.encode('utf-8')
+    net_name = 'TOMOYA TV'.encode('utf-8')
     nd = bytes([0x40, len(net_name)]) + net_name
     nd += bytes([0xFE, 0x02, 0x03, 0x01])
 
@@ -93,7 +93,7 @@ def build_nit(nid, channel, service_id, remote_key):
 
 def build_sdt(nid, service_id):
     """SDT actual: 42 F0 ..."""
-    svc_name = 'iwancof局'.encode('utf-8')
+    svc_name = 'TOMOYA TV'.encode('utf-8')
     svc_desc = bytes([0x48, 2 + len(svc_name), 0x01, 0x00, len(svc_name)]) + svc_name
 
     body = struct.pack('>H', nid)
@@ -109,7 +109,7 @@ def build_sdt(nid, service_id):
 
 def build_bit(nid):
     """BIT: C4 F0 ..."""
-    bc_name = 'iwancof局'.encode('utf-8')
+    bc_name = 'TOMOYA TV'.encode('utf-8')
     bc_desc = bytes([0xD8, len(bc_name)]) + bc_name
     bc_entry = bytes([0x01]) + struct.pack('>H', 0xF000 | len(bc_desc)) + bc_desc
 
@@ -148,8 +148,8 @@ def build_eit(nid, service_id):
     duration = bytes([bcd(3), bcd(0), bcd(0)])  # 03:00:00
 
     # short_event_descriptor (0x4D)
-    event_name = 'TOMOYAの勉強会'.encode('utf-8')
-    event_text = '楽しく学ぼう'.encode('utf-8')
+    event_name = b'TOMOYA Study Session'
+    event_text = b'Learning together'
     sed = bytearray([0x4D])
     sed_body = b'jpn'  # ISO 639 language
     sed_body += bytes([len(event_name)]) + event_name
@@ -189,7 +189,7 @@ def build_eit(nid, service_id):
     # Section body
     body = struct.pack('>H', service_id)
     body += b'\xC1'       # version=0, current
-    body += b'\x00\x00'   # section_number=0, last_section_number=1
+    body += b'\x00\x00'   # section_number=0, last_section_number=0
     body += struct.pack('>H', nid)   # transport_stream_id
     body += struct.pack('>H', nid)   # original_network_id
     body += b'\x00'       # segment_last_section_number
@@ -326,10 +326,10 @@ def inject(input_path, output_path, channel, fullseg_ts=None):
         ctag = 0x81 if stype in (0x02, 0x1B) else 0x83
         streams.append((stype, es_pid, ctag))
 
-    nid = 0x7FEF
-    remote_key = 3
+    nid = 0x7FE6
+    sid = 0x0430
+    remote_key = 7
 
-    # Use Layer B PCR if available, else Layer A
     main_pcr = pcr_pid
     if fullseg_es:
         for stype, pid in fullseg_es:
@@ -337,14 +337,14 @@ def inject(input_path, output_path, channel, fullseg_ts=None):
                 main_pcr = pid
                 break
 
-    pat = build_pat(nid, service_id, pmt_pid)
-    pmt = build_pmt(service_id, main_pcr, streams, pmt_pid)
-    nit = build_nit(nid, channel, service_id, remote_key)
-    sdt = build_sdt(nid, service_id)
+    pat = build_pat(nid, sid, pmt_pid)
+    pmt = build_pmt(sid, main_pcr, streams, pmt_pid)
+    nit = build_nit(nid, channel, sid, remote_key)
+    sdt = build_sdt(nid, sid)
     bit = build_bit(nid)
-    eit = build_eit(nid, service_id)
+    eit = build_eit(nid, sid)
 
-    print(f"  nid=0x{nid:04X} sid=0x{service_id:04X} CH{channel}")
+    print(f"  nid=0x{nid:04X} sid=0x{sid:04X} CH{channel}")
     print(f"  PMT ES: {[(hex(s), hex(p), hex(c)) for s, p, c in streams]}")
 
     n = len(ts_data) // 188
