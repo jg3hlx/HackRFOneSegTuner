@@ -168,7 +168,7 @@ def build_eit_pf(nid, service_id, version=1):
     def bcd(v):
         return ((v // 10) << 4) | (v % 10)
 
-    event_name = arib_text('IWANCOF HOUR')
+    event_name = arib_text('IWANCOF HACK RF FULLSEG TESTING')
     event_text = arib_text('Learning together')
 
     sed_body = b'jpn' + bytes([len(event_name)]) + event_name
