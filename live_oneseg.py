@@ -28,8 +28,10 @@ parser.add_argument('--calibrate', action='store_true',
 parser.add_argument('--amp', action='store_true', default=True,
                     help='Enable RF amp (default: on)')
 parser.add_argument('--no-amp', action='store_true')
-parser.add_argument('--if-gain', type=int, default=8)
-parser.add_argument('--bb-gain', type=int, default=16)
+parser.add_argument('--if-gain', type=int, default=24)
+parser.add_argument('--bb-gain', type=int, default=24)
+parser.add_argument('--auto-gain', action='store_true',
+                    help='Auto-calibrate gain: capture 1s, adjust to avoid clipping')
 parser.add_argument('--output', type=str, default=None,
                     help='Also save TS to file')
 args = parser.parse_args()
@@ -37,6 +39,50 @@ if args.no_amp:
     args.amp = False
 
 freq = 473.143e6 + (args.channel - 13) * 6e6
+
+
+def calibrate_gain(freq, amp):
+    """Capture 1s at various gain levels, pick one with good signal without clipping."""
+    import numpy as np
+    print("=== Auto Gain Calibration ===")
+    candidates = [(8, 16), (16, 16), (24, 24), (32, 32), (40, 40)]
+    best_if, best_bb = 24, 24
+    best_score = -999
+
+    for if_g, bb_g in candidates:
+        tmpiq = tempfile.mktemp(suffix='.cf32')
+        cal_tb = gr.top_block()
+        cal_src = osmosdr.source(args="numchan=1 hackrf=0")
+        cal_src.set_sample_rate(SAMP_RATE)
+        cal_src.set_center_freq(freq)
+        if amp:
+            cal_src.set_gain(14, 'RF', 0)
+        cal_src.set_gain(if_g, 'IF', 0)
+        cal_src.set_gain(bb_g, 'BB', 0)
+        cal_head = blocks.head(gr.sizeof_gr_complex, int(SAMP_RATE * 1))
+        cal_sink = blocks.file_sink(gr.sizeof_gr_complex, tmpiq, False)
+        cal_tb.connect(cal_src, cal_head, cal_sink)
+        cal_tb.start()
+        cal_tb.wait()
+
+        d = np.fromfile(tmpiq, dtype=np.complex64)
+        pwr = float(np.mean(np.abs(d) ** 2))
+        peak = float(np.max(np.abs(d)))
+        pwr_db = 10 * np.log10(pwr) if pwr > 0 else -99
+        os.remove(tmpiq)
+
+        clipping = peak > 0.9
+        score = pwr_db if not clipping else pwr_db - 100
+        marker = " CLIP!" if clipping else ""
+        print(f"  IF={if_g:2d} BB={bb_g:2d}: {pwr_db:+.1f} dB peak={peak:.3f}{marker}")
+
+        if score > best_score:
+            best_score = score
+            best_if, best_bb = if_g, bb_g
+
+    print(f"  → IF={best_if} BB={best_bb}")
+    return best_if, best_bb
+
 
 def calibrate_offset(freq, amp, if_gain, bb_gain):
     """Capture 5s and try offsets 8-13 to find which produces most TS data."""
@@ -85,6 +131,9 @@ def calibrate_offset(freq, amp, if_gain, bb_gain):
 
     print(f"Best: {best_sc:+d} subcarriers ({best_sz/1024:.1f} KB)")
     return best_sc
+
+if args.auto_gain:
+    args.if_gain, args.bb_gain = calibrate_gain(freq, args.amp)
 
 if args.calibrate:
     n_subcarriers = calibrate_offset(freq, args.amp, args.if_gain, args.bb_gain)
