@@ -107,8 +107,8 @@ with open('content/oneseg${NUM}.ts', 'wb') as f:
         f.write(a)
 "
 
-# Clean up
-rm -f /tmp/oneseg${NUM}_raw.ts /tmp/fullseg${NUM}_raw.ts /tmp/oneseg${NUM}_si.ts
+# Keep raw TS in /tmp as cache for build_all.sh
+rm -f /tmp/oneseg${NUM}_si.ts
 
 echo ""
 echo "=== Done ==="
