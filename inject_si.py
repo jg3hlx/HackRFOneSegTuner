@@ -50,9 +50,29 @@ def make_ts_packet(pid, payload, cc, pusi=True):
     return bytes(pkt)
 
 
-def arib_text(s):
-    """Encode text for ARIB STD-B24. Prepend LS1 (0x0E) to invoke alphanumeric."""
-    return b'\x0E' + s.encode('ascii')
+def arib_text(text):
+    """Encode text for ARIB STD-B24 8-unit code."""
+    out = bytearray()
+    mode = None
+    for ch in text:
+        cp = ord(ch)
+        if ch == ' ':
+            out.append(0x20)
+        elif 0x21 <= cp <= 0x7E:
+            if mode != 'alnum':
+                out.append(0x0E)  # LS1: G1 alphanumeric into GL
+                mode = 'alnum'
+            out.append(cp)
+        else:
+            raw = ch.encode('euc_jp')
+            if len(raw) == 2 and raw[0] >= 0xA1 and raw[1] >= 0xA1:
+                if mode != 'kanji':
+                    out.append(0x0F)  # LS0: G0 Kanji into GL
+                    mode = 'kanji'
+                out.extend((raw[0] & 0x7F, raw[1] & 0x7F))
+            else:
+                raise ValueError(f'Character outside ARIB/JIS subset: {ch!r}')
+    return bytes(out)
 
 
 # ── Section builders using Oracle-verified format ──
@@ -106,7 +126,7 @@ def build_sdt(nid, service_id):
     body += struct.pack('>H', nid)    # original_network_id
     body += b'\xFF'
     body += struct.pack('>H', service_id)
-    body += bytes([0xE1])             # reserved=111, EIT_pf=1
+    body += bytes([0xF1])             # reserved=111, H-EIT=1, pf=1
     body += struct.pack('>H', len(svc_desc) & 0x0FFF)  # running=0, free_CA=0
     body += svc_desc
     return _wrap(0x42, body, 0xF0)
@@ -139,69 +159,49 @@ def build_tot():
     return _wrap(0x73, body, 0x70)
 
 
-def build_eit(nid, service_id):
-    """EIT present/following actual (table_id 0x4E) on PID 0x0012."""
+def build_eit_pf(nid, service_id, version=1):
+    """Build EIT p/f (0x4E). Returns (present_section, following_section)."""
     now = datetime.now(JST)
-    mjd = (now.date() - datetime(1858, 11, 17).date()).days
+    start = now.replace(minute=0, second=0, microsecond=0)
+    mjd = (start.date() - datetime(1858, 11, 17).date()).days
 
     def bcd(v):
         return ((v // 10) << 4) | (v % 10)
 
-    # Event starts at current hour, lasts 3 hours
-    start_hour = now.hour
-    start_time = bytes([bcd(start_hour), bcd(0), bcd(0)])
-    duration = bytes([bcd(3), bcd(0), bcd(0)])  # 03:00:00
-
-    # short_event_descriptor (0x4D)
     event_name = arib_text('IWANCOF HOUR')
     event_text = arib_text('Learning together')
-    sed = bytearray([0x4D])
-    sed_body = b'jpn'  # ISO 639 language
-    sed_body += bytes([len(event_name)]) + event_name
+
+    sed_body = b'jpn' + bytes([len(event_name)]) + event_name
     sed_body += bytes([len(event_text)]) + event_text
-    sed.append(len(sed_body))
-    sed += sed_body
+    short_event = bytes([0x4D, len(sed_body)]) + sed_body
 
-    # component_descriptor (0x50) — video
-    cd = bytes([0x50, 0x06,
-                0xB3,  # stream_content=0x0B(H.264) or 0x01(video), component_type=0x03
-                0x01,  # component_tag
-                0x6A, 0x70, 0x6E,  # "jpn"
-                ])
+    # component_descriptor: 1080i 16:9, tag=0x00
+    video = bytes([0x50, 0x06, 0xF1, 0xB3, 0x00, 0x6A, 0x70, 0x6E])
+    # audio_component_descriptor: stereo AAC 48kHz, tag=0x10
+    audio = bytes([0xC4, 0x09, 0xF2, 0x03, 0x10, 0x0F, 0xFF, 0x5F,
+                   0x6A, 0x70, 0x6E])
 
-    # audio_component_descriptor (0xC4)
-    acd = bytes([0xC4, 0x09,
-                 0x01,  # reserved + stream_content
-                 0x02,  # component_type (AAC stereo)
-                 0x10,  # component_tag
-                 0x01,  # stream_type (AAC)
-                 0x01,  # simulcast_group_tag
-                 0x00,  # ES_multi_lingual=0, main_component=0, quality=0
-                 0x00,  # sampling_rate=0
-                 0x6A, 0x70,  # "jp" (language, truncated to fit)
-                 ])
+    descs = short_event + video + audio
 
-    descs = bytes(sed) + cd + acd
-
-    # Event entry
-    event = struct.pack('>H', 0x0001)  # event_id
-    event += struct.pack('>H', mjd)    # start_date MJD
-    event += start_time                # start_time BCD
-    event += duration                  # duration BCD
-    event += struct.pack('>H', len(descs) & 0x0FFF)  # running=0, free_CA=0
+    event = struct.pack('>H', 0x0001)
+    event += struct.pack('>H', mjd)
+    event += bytes([bcd(start.hour), 0x00, 0x00])
+    event += bytes([bcd(3), 0x00, 0x00])  # 3 hours
+    event += struct.pack('>H', len(descs))  # running=0, free_CA=0
     event += descs
 
-    # Section body
-    body = struct.pack('>H', service_id)
-    body += b'\xC1'       # version=0, current
-    body += b'\x00\x00'   # section_number=0, last_section_number=0
-    body += struct.pack('>H', nid)   # transport_stream_id
-    body += struct.pack('>H', nid)   # original_network_id
-    body += b'\x00'       # segment_last_section_number
-    body += b'\x4E'       # last_table_id
-    body += event
+    ver_byte = 0xC1 | ((version & 0x1F) << 1)
 
-    return _wrap(0x4E, body, 0xF0)
+    def make_section(sec_num, events):
+        body = struct.pack('>H', service_id)
+        body += bytes([ver_byte, sec_num, 0x01])  # last_section_number=1
+        body += struct.pack('>H', nid)
+        body += struct.pack('>H', nid)
+        body += b'\x01\x4E'  # segment_last=1, last_table_id=0x4E
+        body += events
+        return _wrap(0x4E, body, 0xF0)
+
+    return make_section(0, event), make_section(1, b'')
 
 
 def build_pmt(service_id, pcr_pid, streams, pmt_pid):
@@ -347,7 +347,7 @@ def inject(input_path, output_path, channel, fullseg_ts=None):
     nit = build_nit(nid, channel, sid, remote_key)
     sdt = build_sdt(nid, sid)
     bit = build_bit(nid)
-    eit = build_eit(nid, sid)
+    eit_present, eit_following = build_eit_pf(nid, sid)
 
     print(f"  nid=0x{nid:04X} sid=0x{sid:04X} CH{channel}")
     print(f"  PMT ES: {[(hex(s), hex(p), hex(c)) for s, p, c in streams]}")
@@ -393,7 +393,8 @@ def inject(input_path, output_path, channel, fullseg_ts=None):
                 out.append(make_ts_packet(0x0024, bit, next_cc(0x0024)))
                 continue
             if r == 4:
-                out.append(make_ts_packet(0x0012, eit, next_cc(0x0012)))
+                eit_sec = eit_present if (null_idx // 5) % 2 == 0 else eit_following
+                out.append(make_ts_packet(0x0012, eit_sec, next_cc(0x0012)))
                 continue
         out.append(pkt)
 
