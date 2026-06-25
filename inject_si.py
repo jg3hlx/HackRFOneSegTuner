@@ -73,7 +73,7 @@ def build_nit(nid, channel, service_id, remote_key):
     freq_val = 3312 + 42 * (channel - 13)
 
     # Network descriptors: network_name(0x40) + system_management(0xFE)
-    net_name = arib_text('TOMOYA TV')
+    net_name = arib_text('Iwancof TV')
     nd = bytes([0x40, len(net_name)]) + net_name
     nd += bytes([0xFE, 0x02, 0x03, 0x01])
 
@@ -98,7 +98,7 @@ def build_nit(nid, channel, service_id, remote_key):
 
 def build_sdt(nid, service_id):
     """SDT actual: 42 F0 ..."""
-    svc_name = arib_text('TOMOYA TV')
+    svc_name = arib_text('Iwancof TV')
     svc_desc = bytes([0x48, 3 + len(svc_name), 0x01, 0x00, len(svc_name)]) + svc_name
 
     body = struct.pack('>H', nid)
@@ -114,7 +114,7 @@ def build_sdt(nid, service_id):
 
 def build_bit(nid):
     """BIT: C4 F0 ..."""
-    bc_name = arib_text('TOMOYA TV')
+    bc_name = arib_text('Iwancof TV')
     bc_desc = bytes([0xD8, len(bc_name)]) + bc_name
     bc_entry = bytes([0x01]) + struct.pack('>H', 0xF000 | len(bc_desc)) + bc_desc
 
@@ -153,7 +153,7 @@ def build_eit(nid, service_id):
     duration = bytes([bcd(3), bcd(0), bcd(0)])  # 03:00:00
 
     # short_event_descriptor (0x4D)
-    event_name = arib_text('TOMOYA Study Session')
+    event_name = arib_text('Iwancof Study Session')
     event_text = arib_text('Learning together')
     sed = bytearray([0x4D])
     sed_body = b'jpn'  # ISO 639 language
