@@ -93,7 +93,7 @@ def build_nit(nid, channel, service_id, remote_key):
     freq_val = 3312 + 42 * (channel - 13)
 
     # Network descriptors: network_name(0x40) + system_management(0xFE)
-    net_name = arib_text('IWANCOF')
+    net_name = arib_text('TOMOYA局')
     nd = bytes([0x40, len(net_name)]) + net_name
     nd += bytes([0xFE, 0x02, 0x03, 0x01])
 
@@ -118,7 +118,7 @@ def build_nit(nid, channel, service_id, remote_key):
 
 def build_sdt(nid, service_id):
     """SDT actual: 42 F0 ..."""
-    svc_name = arib_text('IWANCOF')
+    svc_name = arib_text('TOMOYA局')
     svc_desc = bytes([0x48, 3 + len(svc_name), 0x01, 0x00, len(svc_name)]) + svc_name
 
     body = struct.pack('>H', nid)
@@ -134,7 +134,7 @@ def build_sdt(nid, service_id):
 
 def build_bit(nid):
     """BIT: C4 F0 ..."""
-    bc_name = arib_text('IWANCOF')
+    bc_name = arib_text('TOMOYA局')
     bc_desc = bytes([0xD8, len(bc_name)]) + bc_name
     bc_entry = bytes([0x01]) + struct.pack('>H', 0xF000 | len(bc_desc)) + bc_desc
 
@@ -168,7 +168,7 @@ def build_eit_pf(nid, service_id, version=1):
     def bcd(v):
         return ((v // 10) << 4) | (v % 10)
 
-    event_name = arib_text('IWANCOF HACK RF FULLSEG TESTING')
+    event_name = arib_text('TOMOYAのTV勉強会')
     event_text = arib_text('Learning together')
 
     sed_body = b'jpn' + bytes([len(event_name)]) + event_name
