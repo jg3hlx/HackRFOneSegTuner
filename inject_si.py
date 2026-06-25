@@ -50,6 +50,11 @@ def make_ts_packet(pid, payload, cc, pusi=True):
     return bytes(pkt)
 
 
+def arib_text(s):
+    """Encode text for ARIB STD-B24. Prepend LS1 (0x0E) to invoke alphanumeric."""
+    return b'\x0E' + s.encode('ascii')
+
+
 # ── Section builders using Oracle-verified format ──
 
 def build_pat(nid, service_id, pmt_pid):
@@ -68,7 +73,7 @@ def build_nit(nid, channel, service_id, remote_key):
     freq_val = 3312 + 42 * (channel - 13)
 
     # Network descriptors: network_name(0x40) + system_management(0xFE)
-    net_name = 'TOMOYA TV'.encode('utf-8')
+    net_name = arib_text('TOMOYA TV')
     nd = bytes([0x40, len(net_name)]) + net_name
     nd += bytes([0xFE, 0x02, 0x03, 0x01])
 
@@ -93,7 +98,7 @@ def build_nit(nid, channel, service_id, remote_key):
 
 def build_sdt(nid, service_id):
     """SDT actual: 42 F0 ..."""
-    svc_name = 'TOMOYA TV'.encode('utf-8')
+    svc_name = arib_text('TOMOYA TV')
     svc_desc = bytes([0x48, 2 + len(svc_name), 0x01, 0x00, len(svc_name)]) + svc_name
 
     body = struct.pack('>H', nid)
@@ -109,7 +114,7 @@ def build_sdt(nid, service_id):
 
 def build_bit(nid):
     """BIT: C4 F0 ..."""
-    bc_name = 'TOMOYA TV'.encode('utf-8')
+    bc_name = arib_text('TOMOYA TV')
     bc_desc = bytes([0xD8, len(bc_name)]) + bc_name
     bc_entry = bytes([0x01]) + struct.pack('>H', 0xF000 | len(bc_desc)) + bc_desc
 
@@ -148,8 +153,8 @@ def build_eit(nid, service_id):
     duration = bytes([bcd(3), bcd(0), bcd(0)])  # 03:00:00
 
     # short_event_descriptor (0x4D)
-    event_name = b'TOMOYA Study Session'
-    event_text = b'Learning together'
+    event_name = arib_text('TOMOYA Study Session')
+    event_text = arib_text('Learning together')
     sed = bytearray([0x4D])
     sed_body = b'jpn'  # ISO 639 language
     sed_body += bytes([len(event_name)]) + event_name
@@ -183,7 +188,7 @@ def build_eit(nid, service_id):
     event += struct.pack('>H', mjd)    # start_date MJD
     event += start_time                # start_time BCD
     event += duration                  # duration BCD
-    event += struct.pack('>H', 0x8000 | (len(descs) & 0x0FFF))  # running=4, free_CA=0
+    event += struct.pack('>H', len(descs) & 0x0FFF)  # running=0, free_CA=0
     event += descs
 
     # Section body
