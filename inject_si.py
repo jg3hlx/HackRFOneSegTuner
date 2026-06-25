@@ -68,7 +68,8 @@ def build_nit(nid, channel, service_id, remote_key):
     freq_val = 3312 + 42 * (channel - 13)
 
     # Network descriptors: network_name(0x40) + system_management(0xFE)
-    nd = bytes([0x40, 0x04]) + b'TEST'
+    net_name = 'iwancof局'.encode('utf-8')
+    nd = bytes([0x40, len(net_name)]) + net_name
     nd += bytes([0xFE, 0x02, 0x03, 0x01])
 
     # TS descriptors: service_list(0x41) + terrestrial(0xFA) + ts_info(0xCD)
@@ -92,7 +93,7 @@ def build_nit(nid, channel, service_id, remote_key):
 
 def build_sdt(nid, service_id):
     """SDT actual: 42 F0 ..."""
-    svc_name = b'TEST TV'
+    svc_name = 'iwancof局'.encode('utf-8')
     svc_desc = bytes([0x48, 2 + len(svc_name), 0x01, 0x00, len(svc_name)]) + svc_name
 
     body = struct.pack('>H', nid)
@@ -100,7 +101,7 @@ def build_sdt(nid, service_id):
     body += struct.pack('>H', nid)    # original_network_id
     body += b'\xFF'
     body += struct.pack('>H', service_id)
-    body += bytes([0xE0])             # reserved=111, all EIT=0
+    body += bytes([0xE1])             # reserved=111, EIT_pf=1
     body += struct.pack('>H', len(svc_desc) & 0x0FFF)  # running=0, free_CA=0
     body += svc_desc
     return _wrap(0x42, body, 0xF0)
@@ -108,7 +109,8 @@ def build_sdt(nid, service_id):
 
 def build_bit(nid):
     """BIT: C4 F0 ..."""
-    bc_desc = bytes([0xD8, 0x04]) + b'TEST'
+    bc_name = 'iwancof局'.encode('utf-8')
+    bc_desc = bytes([0xD8, len(bc_name)]) + bc_name
     bc_entry = bytes([0x01]) + struct.pack('>H', 0xF000 | len(bc_desc)) + bc_desc
 
     body = struct.pack('>H', nid)
@@ -130,6 +132,71 @@ def build_tot():
     body += bytes([bcd(now.hour), bcd(now.minute), bcd(now.second)])
     body += struct.pack('>H', 0xF000)  # no descriptors
     return _wrap(0x73, body, 0x70)
+
+
+def build_eit(nid, service_id):
+    """EIT present/following actual (table_id 0x4E) on PID 0x0012."""
+    now = datetime.now(JST)
+    mjd = (now.date() - datetime(1858, 11, 17).date()).days
+
+    def bcd(v):
+        return ((v // 10) << 4) | (v % 10)
+
+    # Event starts at current hour, lasts 3 hours
+    start_hour = now.hour
+    start_time = bytes([bcd(start_hour), bcd(0), bcd(0)])
+    duration = bytes([bcd(3), bcd(0), bcd(0)])  # 03:00:00
+
+    # short_event_descriptor (0x4D)
+    event_name = 'TOMOYAの勉強会'.encode('utf-8')
+    event_text = '楽しく学ぼう'.encode('utf-8')
+    sed = bytearray([0x4D])
+    sed_body = b'jpn'  # ISO 639 language
+    sed_body += bytes([len(event_name)]) + event_name
+    sed_body += bytes([len(event_text)]) + event_text
+    sed.append(len(sed_body))
+    sed += sed_body
+
+    # component_descriptor (0x50) — video
+    cd = bytes([0x50, 0x06,
+                0xB3,  # stream_content=0x0B(H.264) or 0x01(video), component_type=0x03
+                0x01,  # component_tag
+                0x6A, 0x70, 0x6E,  # "jpn"
+                ])
+
+    # audio_component_descriptor (0xC4)
+    acd = bytes([0xC4, 0x09,
+                 0x01,  # reserved + stream_content
+                 0x02,  # component_type (AAC stereo)
+                 0x10,  # component_tag
+                 0x01,  # stream_type (AAC)
+                 0x01,  # simulcast_group_tag
+                 0x00,  # ES_multi_lingual=0, main_component=0, quality=0
+                 0x00,  # sampling_rate=0
+                 0x6A, 0x70,  # "jp" (language, truncated to fit)
+                 ])
+
+    descs = bytes(sed) + cd + acd
+
+    # Event entry
+    event = struct.pack('>H', 0x0001)  # event_id
+    event += struct.pack('>H', mjd)    # start_date MJD
+    event += start_time                # start_time BCD
+    event += duration                  # duration BCD
+    event += struct.pack('>H', 0x8000 | (len(descs) & 0x0FFF))  # running=4, free_CA=0
+    event += descs
+
+    # Section body
+    body = struct.pack('>H', service_id)
+    body += b'\xC1'       # version=0, current
+    body += b'\x00\x00'   # section_number=0, last_section_number=1
+    body += struct.pack('>H', nid)   # transport_stream_id
+    body += struct.pack('>H', nid)   # original_network_id
+    body += b'\x00'       # segment_last_section_number
+    body += b'\x4E'       # last_table_id
+    body += event
+
+    return _wrap(0x4E, body, 0xF0)
 
 
 def build_pmt(service_id, pcr_pid, streams, pmt_pid):
@@ -275,6 +342,7 @@ def inject(input_path, output_path, channel, fullseg_ts=None):
     nit = build_nit(nid, channel, service_id, remote_key)
     sdt = build_sdt(nid, service_id)
     bit = build_bit(nid)
+    eit = build_eit(nid, service_id)
 
     print(f"  nid=0x{nid:04X} sid=0x{service_id:04X} CH{channel}")
     print(f"  PMT ES: {[(hex(s), hex(p), hex(c)) for s, p, c in streams]}")
@@ -299,17 +367,17 @@ def inject(input_path, output_path, channel, fullseg_ts=None):
             out.append(make_ts_packet(0x0000, pat, next_cc(0x0000)))
             continue
         if pid == pmt_pid:
-            if pkt[1] & 0x40:  # PUSI only
+            if pkt[1] & 0x40:
                 out.append(make_ts_packet(pmt_pid, pmt, next_cc(pmt_pid)))
             continue
-        if pid in (0x0010, 0x0014, 0x0024):
+        if pid in (0x0010, 0x0012, 0x0014, 0x0024):
             continue
         if pid == 0x0011:
             out.append(make_ts_packet(0x0011, sdt, next_cc(0x0011)))
             continue
         if pid == 0x1FFF:
             null_idx += 1
-            r = null_idx % 4
+            r = null_idx % 5
             if r == 1:
                 out.append(make_ts_packet(0x0010, nit, next_cc(0x0010)))
                 continue
@@ -318,6 +386,9 @@ def inject(input_path, output_path, channel, fullseg_ts=None):
                 continue
             if r == 3:
                 out.append(make_ts_packet(0x0024, bit, next_cc(0x0024)))
+                continue
+            if r == 4:
+                out.append(make_ts_packet(0x0012, eit, next_cc(0x0012)))
                 continue
         out.append(pkt)
 
@@ -329,7 +400,7 @@ def inject(input_path, output_path, channel, fullseg_ts=None):
     for p in out:
         pid = ((p[1] & 0x1F) << 8) | p[2]
         pc[pid] = pc.get(pid, 0) + 1
-    si = {0x0000: 'PAT', 0x0010: 'NIT', 0x0011: 'SDT',
+    si = {0x0000: 'PAT', 0x0010: 'NIT', 0x0011: 'SDT', 0x0012: 'EIT',
           0x0014: 'TOT', 0x0024: 'BIT', 0x1FFF: 'NULL'}
     print(f"  {len(out)} packets")
     for pid in sorted(pc):

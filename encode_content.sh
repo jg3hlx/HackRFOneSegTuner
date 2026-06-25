@@ -3,21 +3,25 @@
 #
 # Usage:
 #   ./encode_content.sh <input_video> <number> [channel]
-#
-# Example:
-#   ./encode_content.sh content/source3.mp4 3 13
+#   ./encode_content.sh --h264 <input_video> <number> [channel]
 #
 # Produces: content/oneseg{N}.ts  content/fullseg{N}.ts
 
 set -e
 cd "$(dirname "$0")"
 
+H264=0
+if [ "$1" = "--h264" ]; then
+    H264=1
+    shift
+fi
+
 INPUT="$1"
 NUM="$2"
 CH="${3:-13}"
 
 if [ -z "$INPUT" ] || [ -z "$NUM" ]; then
-    echo "Usage: $0 <input_video> <number> [channel]"
+    echo "Usage: $0 [--h264] <input_video> <number> [channel]"
     exit 1
 fi
 
@@ -36,19 +40,34 @@ ffmpeg -i "$INPUT" \
   -muxrate 400k \
   -y /tmp/oneseg${NUM}_raw.ts 2>/dev/null
 
-# Step 2: Full-seg (MPEG-2 1440x1080, ~16Mbps)
-echo "[2/5] Encoding full-seg..."
-ffmpeg -i "$INPUT" \
-  -c:v mpeg2video -profile:v high \
-  -b:v 14M -maxrate 15M -bufsize 30M \
-  -s 1440x1080 -r 30000/1001 -g 15 \
-  -c:a aac -b:a 256k -ar 48000 -ac 2 \
-  -f mpegts \
-  -mpegts_transport_stream_id 0x7fe1 \
-  -mpegts_pmt_start_pid 0x1fc8 \
-  -mpegts_start_pid 0x0100 \
-  -muxrate 16M \
-  -y /tmp/fullseg${NUM}_raw.ts 2>/dev/null
+# Step 2: Full-seg
+if [ "$H264" = "1" ]; then
+    echo "[2/5] Encoding full-seg (H.264 1920x1080)..."
+    ffmpeg -i "$INPUT" \
+      -c:v libx264 -profile:v high -level 4.0 \
+      -b:v 12M -maxrate 14M -bufsize 28M \
+      -s 1920x1080 -r 30000/1001 -g 30 \
+      -c:a aac -b:a 256k -ar 48000 -ac 2 \
+      -f mpegts \
+      -mpegts_transport_stream_id 0x7fe1 \
+      -mpegts_pmt_start_pid 0x1fc8 \
+      -mpegts_start_pid 0x0100 \
+      -muxrate 16M \
+      -y /tmp/fullseg${NUM}_raw.ts 2>/dev/null
+else
+    echo "[2/5] Encoding full-seg (MPEG-2 1440x1080)..."
+    ffmpeg -i "$INPUT" \
+      -c:v mpeg2video -profile:v high \
+      -b:v 14M -maxrate 15M -bufsize 30M \
+      -s 1440x1080 -r 30000/1001 -g 15 \
+      -c:a aac -b:a 256k -ar 48000 -ac 2 \
+      -f mpegts \
+      -mpegts_transport_stream_id 0x7fe1 \
+      -mpegts_pmt_start_pid 0x1fc8 \
+      -mpegts_start_pid 0x0100 \
+      -muxrate 16M \
+      -y /tmp/fullseg${NUM}_raw.ts 2>/dev/null
+fi
 
 # Step 3: Inject SI tables into one-seg (with fullseg ES in PMT)
 echo "[3/5] Injecting SI tables..."
