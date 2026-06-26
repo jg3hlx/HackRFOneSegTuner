@@ -10,3 +10,6 @@ sessions/
 # gr-isdbt build artifacts
 gr-isdbt/build/
 gr-isdbt/.conda/
+content/
+diag_*
+*.cf32
